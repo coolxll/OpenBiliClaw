@@ -1,0 +1,47 @@
+# OpenBiliClaw backend — fork image, NO Ollama sidecar.
+#
+# Use this when you don't want local embeddings (e.g. you use a cloud
+# embedding provider, or you simply don't need embeddings). Saves ~2-3GB
+# RAM and the ~1.1GB bge-m3 image.
+#
+#   OPENBILICLAW_VERSION=0.3.201-coolxll.1 docker compose -f docker-compose.no-ollama.yml up -d
+#   # open http://127.0.0.1:8420/setup/ for AI config + prereq checks
+#   # then: docker exec -it openbiliclaw-backend openbiliclaw init
+#
+# Embedding will be disabled (recommendation diversity/dedup degrades,
+# but the core discovery + recommendation pipeline still works). To
+# enable embeddings later, configure [llm.embedding] in config.toml
+# to point at a cloud provider (Gemini) or a host-side Ollama.
+
+services:
+  openbiliclaw-backend:
+    image: ghcr.io/coolxll/openbiliclaw-backend:${OPENBILICLAW_VERSION:-latest}
+    container_name: openbiliclaw-backend
+    # No depends_on / no OPENBILICLAW_SEED_OLLAMA_DEFAULTS — the config
+    # bootstrap won't try to point embedding at a missing sidecar.
+    environment:
+      OPENBILICLAW_PROJECT_ROOT: /app/runtime
+      OPENBILICLAW_CONFIG_TEMPLATE: /app/config.example.toml
+      OPENBILICLAW_PROXY_HOST: ${OPENBILICLAW_PROXY_HOST:-host.docker.internal}
+      OPENBILICLAW_PROXY_PORT: ${OPENBILICLAW_PROXY_PORT:-7897}
+      OPENBILICLAW_PROXY_TIMEOUT: ${OPENBILICLAW_PROXY_TIMEOUT:-1.0}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8420:8420"
+    volumes:
+      - openbiliclaw_config:/app/runtime
+      - openbiliclaw_data:/app/runtime/data
+      - openbiliclaw_logs:/app/runtime/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8420/api/health', timeout=4).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  openbiliclaw_config:
+  openbiliclaw_data:
+  openbiliclaw_logs:
