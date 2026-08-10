@@ -8,6 +8,7 @@ from typing import Any, NoReturn
 
 from .base import (
     DEFAULT_REASONING_EFFORT,
+    LLM_USER_AGENT,
     LLMAuthError,
     LLMProvider,
     LLMProviderError,
@@ -103,7 +104,13 @@ class GeminiProvider(LLMProvider):
             if embedding_output_dimensionality is not None and embedding_output_dimensionality > 0
             else None
         )
-        http_options: dict[str, Any] = {"timeout": int(timeout * 1000)}
+        # Override the SDK's default UA — CF-fronted relays block the
+        # google-genai default with HTTP 403. HttpOptions.headers is the
+        # native "additional HTTP headers" field (google/genai/types.py).
+        http_options: dict[str, Any] = {
+            "timeout": int(timeout * 1000),
+            "headers": {"User-Agent": LLM_USER_AGENT},
+        }
         normalized_base_url = (base_url or "").strip()
         if normalized_base_url:
             http_options["base_url"] = normalized_base_url.rstrip("/") + "/"

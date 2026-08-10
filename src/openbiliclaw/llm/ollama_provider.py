@@ -8,7 +8,13 @@ from typing import Any
 
 import httpx
 
-from .base import LLMProviderError, LLMResponse, LLMResponseError, LLMTimeoutError
+from .base import (
+    LLM_USER_AGENT,
+    LLMProviderError,
+    LLMResponse,
+    LLMResponseError,
+    LLMTimeoutError,
+)
 from .openai_provider import OpenAIProvider
 
 logger = logging.getLogger(__name__)
@@ -207,7 +213,11 @@ class OllamaProvider(OpenAIProvider):
         the ``embed`` path already relies on.
         """
         url = f"{self._native_root()}/api/chat"
-        async with httpx.AsyncClient(timeout=self._timeout, trust_env=False) as client:
+        async with httpx.AsyncClient(
+            timeout=self._timeout,
+            trust_env=False,
+            headers={"User-Agent": LLM_USER_AGENT},
+        ) as client:
             response = await client.post(url, json=payload)
             try:
                 response.raise_for_status()
@@ -259,6 +269,7 @@ class OllamaProvider(OpenAIProvider):
                 async with httpx.AsyncClient(
                     timeout=self._embed_timeout,
                     trust_env=False,
+                    headers={"User-Agent": LLM_USER_AGENT},
                 ) as client:
                     response = await client.post(
                         url,

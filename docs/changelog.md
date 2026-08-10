@@ -6,7 +6,7 @@
 
 ## 未发布
 
-暂无。
+- **修复 LLM 调度被 Cloudflare 拦截返回 HTTP 403**：OpenAI / Anthropic SDK 默认发送 `AsyncOpenAI/Python` / `AsyncAnthropic/Python` 形式的 User-Agent，被 CF 前置的第三方中转站以 `Your request was blocked` 拦截，导致 `openai_compatible` 无 fallback 时整条 LLM 依赖链（推荐生成、候选评估、推测、避雷）全挂。现于 `llm/base.py` 新增 `LLM_USER_AGENT` 常量（`whiteguo233/OpenBiliClaw/<version>`，与 `bangumi_client.py` 同一身份），通过 SDK 的 `default_headers`（OpenAI / Anthropic，展开顺序在内置 UA 之后故覆盖之）与 google-genai `HttpOptions.headers`、Ollama 原生 httpx 调用注入到全部四类 provider。属传输层修复，不新增 config / CLI 接口，不影响 prompt-cache 前缀。
 
 ## v0.3.203：微博登录态初始化与插件可用性修复（2026-08-11）
 
