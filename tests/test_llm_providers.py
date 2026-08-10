@@ -1962,3 +1962,56 @@ def test_gemini_provider_empty_proxy_is_zero_drift(
     assert isinstance(http_options, dict)
     assert "client_args" not in http_options
     assert "async_client_args" not in http_options
+
+
+# --- User-Agent injection (CF-fronted relays block the SDK default UA) ---
+
+
+def test_openai_provider_injects_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The OpenAI SDK default UA is blocked by CF-fronted relays (HTTP 403).
+
+    ``default_headers`` is spread last by the SDK, so our UA overrides it.
+    """
+    from openbiliclaw.llm import openai_provider as mod
+    from openbiliclaw.llm.base import LLM_USER_AGENT
+
+    sdk_kwargs: dict[str, object] = {}
+    monkeypatch.setattr(mod, "AsyncOpenAI", lambda **kw: sdk_kwargs.update(kw))
+
+    OpenAIProvider(api_key="k")
+
+    default_headers = sdk_kwargs.get("default_headers")
+    assert isinstance(default_headers, dict)
+    assert default_headers["User-Agent"] == LLM_USER_AGENT
+    assert default_headers["User-Agent"].startswith("whiteguo233/OpenBiliClaw/")
+
+
+def test_claude_provider_injects_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    from openbiliclaw.llm import claude_provider as mod
+    from openbiliclaw.llm.base import LLM_USER_AGENT
+
+    sdk_kwargs: dict[str, object] = {}
+    monkeypatch.setattr(mod, "AsyncAnthropic", lambda **kw: sdk_kwargs.update(kw))
+
+    ClaudeProvider(api_key="k")
+
+    default_headers = sdk_kwargs.get("default_headers")
+    assert isinstance(default_headers, dict)
+    assert default_headers["User-Agent"] == LLM_USER_AGENT
+
+
+@pytest.mark.skipif(not gemini_sdk_available(), reason="google-genai not installed")
+def test_gemini_provider_injects_user_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    from openbiliclaw.llm import gemini_provider as mod
+    from openbiliclaw.llm.base import LLM_USER_AGENT
+
+    sdk_kwargs: dict[str, object] = {}
+    monkeypatch.setattr(mod.genai, "Client", lambda **kw: sdk_kwargs.update(kw))
+
+    GeminiProvider(api_key="k")
+
+    http_options = sdk_kwargs.get("http_options")
+    assert isinstance(http_options, dict)
+    headers = http_options.get("headers")
+    assert isinstance(headers, dict)
+    assert headers["User-Agent"] == LLM_USER_AGENT

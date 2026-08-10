@@ -6,6 +6,7 @@
 
 ## 未发布
 
+- **修复 LLM 调度被 Cloudflare 拦截返回 HTTP 403**：OpenAI / Anthropic SDK 默认发送 `AsyncOpenAI/Python` / `AsyncAnthropic/Python` 形式的 User-Agent，被 CF 前置的第三方中转站以 `Your request was blocked` 拦截，导致 `openai_compatible` 无 fallback 时整条 LLM 依赖链（推荐生成、候选评估、推测、避雷）全挂。现于 `llm/base.py` 新增 `LLM_USER_AGENT` 常量（`whiteguo233/OpenBiliClaw/<version>`，与 `bangumi_client.py` 同一身份），通过 SDK 的 `default_headers`（OpenAI / Anthropic，展开顺序在内置 UA 之后故覆盖之）与 google-genai `HttpOptions.headers`、Ollama 原生 httpx 调用注入到全部四类 provider。属传输层修复，不新增 config / CLI 接口，不影响 prompt-cache 前缀。
 - **重构新增平台来源 skill 为证据驱动的阶段门**：复盘本地 Codex session、Git/GitHub 首次接入与后续修复，把 `full / discovery-only / capability-increment / audit-only`、机器可读来源契约、逐能力 hybrid auth、fail-closed E2E 写动作边界、中央注册 audit、required/N/A 与 PASS/FAIL 分离、原子任务准入、MV3 恢复、真假空结果、增量同步、scope completeness、时间语义、双浏览器资产和安装包真机 provenance 固化为完成条件；新增历史失败索引与 skill 镜像/契约审计测试，只有全部 required gate 有证据通过才允许报告 complete，发布 mutation 仍需明确授权。独立盲测还复现并修复了 `browser_heartbeat` 对未知来源默认落到知乎的错源分派，现由 source→prefix 显式 registry 驱动，未知来源 fail closed，新增来源必须成组提供 DB getter、扩展 event handler 与往返测试。
 
 ## v0.3.201：探针聊天与 dislike 即时推荐（2026-08-08）

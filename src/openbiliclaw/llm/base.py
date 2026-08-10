@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlsplit
 
+from openbiliclaw import __version__
+
 logger = logging.getLogger(__name__)
 
 LLM_CONNECTIVITY_PROBE_MAX_TOKENS = 4096
@@ -22,6 +24,17 @@ LLM_CONNECTIVITY_PROBE_MAX_TOKENS = 4096
 # callers still pass ``""`` explicitly through LLMService; each adapter then
 # disables reasoning or selects the cheapest supported approximation.
 DEFAULT_REASONING_EFFORT = "medium"
+
+# Application-identity User-Agent injected into every LLM HTTP client. The
+# OpenAI / Anthropic SDKs default to ``AsyncOpenAI/Python <ver>`` /
+# ``AsyncAnthropic/Python <ver>``, which third-party gateways fronted by
+# Cloudflare / WAFs block with HTTP 403 "Your request was blocked" (observed
+# on the openai_compatible relay, 2026-08). Overriding via ``default_headers``
+# (SDK spreads ``_custom_headers`` last, after its own UA) clears the block.
+# Mirrors BANGUMI_USER_AGENT in sources/bangumi_client.py so the project
+# speaks with one identity across all outbound HTTP.
+_LLM_PROJECT_URL = "https://github.com/whiteguo233/OpenBiliClaw"
+LLM_USER_AGENT = f"whiteguo233/OpenBiliClaw/{__version__} ({_LLM_PROJECT_URL})"
 
 
 class LLMProviderError(Exception):
