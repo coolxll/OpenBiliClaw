@@ -2,7 +2,7 @@
 #
 # This file is self-contained — no git clone or local build needed:
 #
-#   curl -fsSLO https://raw.githubusercontent.com/whiteguo233/OpenBiliClaw/main/docker-compose.prebuilt.yml
+#   curl -fsSLO https://raw.githubusercontent.com/coolxll/OpenBiliClaw/main/docker-compose.prebuilt.yml
 #   docker compose -f docker-compose.prebuilt.yml up -d
 #   # then open http://127.0.0.1:8420/setup/ for AI config + prereq checks,
 #   # and run the (container-required) init step from the host:
@@ -29,7 +29,7 @@ services:
     # Prebuilt multi-arch image with bge-m3 BAKED IN (~1.1GB), published by
     # .github/workflows/release-docker.yml. Its entrypoint seeds the baked
     # model into the store before serving — ZERO network pull, offline-ready.
-    image: ghcr.io/whiteguo233/openbiliclaw-ollama:${OPENBILICLAW_VERSION:-latest}
+    image: ghcr.io/coolxll/openbiliclaw-ollama:${OPENBILICLAW_VERSION:-latest}
     container_name: openbiliclaw-ollama
     volumes:
       - openbiliclaw_ollama:/root/.ollama
@@ -49,7 +49,7 @@ services:
     # Multi-arch image (linux/amd64 + linux/arm64) published by
     # .github/workflows/release-docker.yml on every backend release.
     # Pin a specific version by replacing `latest` with e.g. `0.3.152`.
-    image: ghcr.io/whiteguo233/openbiliclaw-backend:latest
+    image: ghcr.io/coolxll/openbiliclaw-backend:${OPENBILICLAW_VERSION:-latest}
     container_name: openbiliclaw-backend
     depends_on:
       # service_started (not service_healthy) on purpose: the sidecar is
