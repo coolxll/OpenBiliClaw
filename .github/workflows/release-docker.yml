@@ -21,8 +21,11 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/whiteguo233/openbiliclaw-backend
-  OLLAMA_IMAGE: ghcr.io/whiteguo233/openbiliclaw-ollama
+  # Dynamic namespace: forks push to their own GHCR namespace
+  # (ghcr.io/<owner>/...) instead of the upstream's, which they cannot
+  # write to. On upstream this resolves to whiteguo233 all the same.
+  IMAGE: ghcr.io/${{ github.repository_owner }}/openbiliclaw-backend
+  OLLAMA_IMAGE: ghcr.io/${{ github.repository_owner }}/openbiliclaw-ollama
 
 jobs:
   publish:
@@ -57,8 +60,13 @@ jobs:
 
           image = os.environ["IMAGE"]
           ollama_image = os.environ["OLLAMA_IMAGE"]
-          tags = f"{image}:{version},{image}:latest"
-          ollama_tags = f"{ollama_image}:{version},{ollama_image}:latest"
+          # PEP 440 local versions (e.g. 0.3.201+coolxll.1) are valid in
+          # pyproject but Docker tags forbid '+'. Derive a Docker-safe tag
+          # by replacing '+' with '-'. The git tag still carries the exact
+          # PEP 440 string for the equality check above.
+          docker_tag = version.replace("+", "-")
+          tags = f"{image}:{docker_tag},{image}:latest"
+          ollama_tags = f"{ollama_image}:{docker_tag},{ollama_image}:latest"
           output = Path(os.environ["GITHUB_OUTPUT"])
           with output.open("a", encoding="utf-8") as handle:
               handle.write(f"version={version}\n")
