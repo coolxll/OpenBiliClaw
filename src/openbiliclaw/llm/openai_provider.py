@@ -16,6 +16,7 @@ from openai import AsyncOpenAI
 
 from .base import (
     DEFAULT_REASONING_EFFORT,
+    LLM_USER_AGENT,
     LLMAuthError,
     LLMProvider,
     LLMProviderError,
@@ -115,6 +116,10 @@ class OpenAIProvider(LLMProvider):
             base_url=base_url or None,
             max_retries=0,
             timeout=timeout,
+            # Override the SDK's default ``AsyncOpenAI/Python`` UA, which
+            # CF-fronted relays block with HTTP 403. ``default_headers`` is
+            # spread last by the SDK, so this wins over the built-in UA.
+            default_headers={"User-Agent": LLM_USER_AGENT},
             **client_kwargs,
         )
 
